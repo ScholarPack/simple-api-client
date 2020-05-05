@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="api-client",
+    name="simple-api-client",
     version="1.0.0",
     author="ScholarPack",
     author_email="dev@scholarpack.com",
@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ScholarPack/api-client",
-    packages=["simple-api-client"],
+    packages=["simple_api_client"],
     classifiers=[
         "Development Status :: 5 - Production/Stable ",
         "Programming Language :: Python :: 3",

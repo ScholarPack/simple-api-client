@@ -4,7 +4,7 @@ import requests
 
 from freezegun import freeze_time
 from logging import Logger
-from api_client import ApiClient, ApiResponse
+from simple_api_client import ApiClient, ApiResponse
 from urllib3.util.retry import Retry
 from werkzeug.exceptions import TooManyRequests
 
@@ -125,7 +125,7 @@ class TestApiClient:
         assert session.adapters.get("https://").max_retries.status_forcelist == [500]
 
     @mock.patch("requests.Session.get")
-    @mock.patch("api_client.ApiClient._create_session")
+    @mock.patch("simple_api_client.ApiClient._create_session")
     def test_making_a_get_request(self, create_session_method, requests_get_method):
         create_session_method.return_value = requests.Session()
 
@@ -146,7 +146,7 @@ class TestApiClient:
         )
 
     @mock.patch("requests.Session.get")
-    @mock.patch("api_client.ApiClient._create_session")
+    @mock.patch("simple_api_client.ApiClient._create_session")
     def test_making_a_get_binary_request(
         self, create_session_method, requests_get_method
     ):
@@ -169,7 +169,7 @@ class TestApiClient:
         )
 
     @mock.patch("requests.Session.post")
-    @mock.patch("api_client.ApiClient._create_session")
+    @mock.patch("simple_api_client.ApiClient._create_session")
     def test_making_a_post_request(self, create_session_method, requests_post_method):
         create_session_method.return_value = requests.Session()
 

@@ -1,4 +1,4 @@
-# Api Client
+# Simple Api Client
 
 A simple API client for connecting to remote services.
 
@@ -10,10 +10,10 @@ Install and update using `pipenv`
 pip install -U simple-api-client
 ```
 
-## Simple usage
+## Usage
 
 ```python
-from api_client import ApiClient
+from simple_api_client import ApiClient
 from logging import Logger
 
 
@@ -90,4 +90,4 @@ python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 
 # Links
 * Releases: https://pypi.org/project/simple-api-client/
-* Code: https://github.com/ScholarPack/api-client/
+* Code: https://github.com/ScholarPack/simple-api-client/

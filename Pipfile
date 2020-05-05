@@ -8,6 +8,7 @@ black = "*"
 freezegun = "*"
 mock = "*"
 pytest = "*"
+twine = "*"
 
 [packages]
 cookie-manager = "*"
