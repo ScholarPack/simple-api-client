@@ -12,6 +12,8 @@ pip install -U simple-api-client
 
 ## Usage
 
+### Simple use-case
+
 ```python
 from simple_api_client import ApiClient
 from logging import Logger
@@ -25,6 +27,63 @@ response = client.get("/example/endpoint")
 if response.status_code == 200:
     print(response.data)
 ```
+
+### Creating more specific clients
+
+This client has been created to be as flexible as possible to be used as a
+base class for more specific clients. All you uneed to do is extend the
+`ApiClient` class and add any suitable methods.
+
+```python
+from flask import g
+from flask import current_app as app
+from simple_api_client import ApiClient
+
+
+class MyServiceClient(ApiClient):
+
+    def use_cookie_auth(self, data):
+        name = app.config.get("COOKIE_NAME")
+        signing_key = app.config.get("COOKIE_SIGNING_KEY")
+        signing_key_id = "trusted-service"
+        payload = {"data": data}
+        self.add_signed_cookie(name, payload, signing_key_id, signing_key)
+
+    def get_remote_resource():
+        return self.get("/example/endpoint")
+```
+
+### A note on security
+
+It's import to understand that when a client is initialised with headers and
+cookies, these will remain set for the lifetime of the client or until
+manually unset. If you don't want this state to remain in-between requests,
+it's important to take action to reset the client. In a
+[Flask](https://flask.palletsprojects.com/) application this is easily
+achieved by assigning the client to the special ['g'
+object](https://flask.palletsprojects.com/en/1.1.x/api/#flask.g).
+
+```python
+from flask import g
+from flask import current_app as app
+from simple_api_client import ApiClient
+
+
+@app.before_request
+def setup_api_client():
+    g.client = ApiClient("http://www.example.com", app.logger)
+```
+
+Then in order to use it, import ['g'](https://flask.palletsprojects.com/en/1.1.x/api/#flask.g)
+
+```python
+from flask import g
+
+
+response = g.client.get("/example/endpoint")
+```
+
+The benefit of this pattern is that the client is reset for every flask request so you don't need to worry about stale data in the client.
 
 ## Development
 
