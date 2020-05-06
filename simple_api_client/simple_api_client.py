@@ -62,7 +62,7 @@ class ApiClient:
         :param host: The host of the api.
         :param logger: A logger.
         :param timeout: A timeout specified in seconds.
-        :param retry_attempts: The amount of time to attempt to retry.
+        :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         """
@@ -151,7 +151,7 @@ class ApiClient:
         """
         Send a GET request to the API
         :param url: The API url to hit
-        :param retry_attempts: The amount of time to attempt to retry.
+        :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response converted from Json to a dict
@@ -184,7 +184,7 @@ class ApiClient:
         """
         Send a GET request to the API and expect a binary object back
         :param url: The API url to hit
-        :param retry_attempts: The amount of time to attempt to retry.
+        :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response is a binary object
@@ -221,7 +221,7 @@ class ApiClient:
         :param url: The API url to hit.
         :param json: Json encoded data to send to the URL.
         :param data: Form encoded data to send to the URL.
-        :param retry_attempts: The amount of time to attempt to retry.
+        :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response as a dict.
@@ -264,7 +264,7 @@ class ApiClient:
     ) -> requests.Session:
         """
         Create a new request session.
-        :param retry_attempts: The amount of time to attempt to retry.
+        :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: A requests session object.
