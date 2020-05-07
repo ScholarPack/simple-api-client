@@ -143,20 +143,20 @@ class ApiClient:
 
     def get(
         self,
-        url: str,
+        path: str,
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
     ) -> ApiResponse:
         """
         Send a GET request to the API
-        :param url: The API url to hit
+        :param path: The API path to hit
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response converted from Json to a dict
         """
-        full_url = f"{self._host}{url}"
+        full_url = f"{self._host}{path}"
         headers = self._headers
         headers["Accept"] = "application/json"
 
@@ -176,20 +176,20 @@ class ApiClient:
 
     def get_binary(
         self,
-        url: str,
+        path: str,
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
     ) -> ApiResponse:
         """
         Send a GET request to the API and expect a binary object back
-        :param url: The API url to hit
+        :param path: The API path to hit
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response is a binary object
         """
-        full_url = f"{self._host}{url}"
+        full_url = f"{self._host}{path}"
         headers = self._headers
         headers["Accept"] = "application/octet-stream"
 
@@ -209,7 +209,7 @@ class ApiClient:
 
     def post(
         self,
-        url: str,
+        path: str,
         json: Optional[Dict] = None,
         data: Optional[Dict] = None,
         retry_attempts: Optional[int] = None,
@@ -218,15 +218,15 @@ class ApiClient:
     ) -> ApiResponse:
         """
         Send a POST request to the API.
-        :param url: The API url to hit.
-        :param json: Json encoded data to send to the URL.
-        :param data: Form encoded data to send to the URL.
+        :param path: The API path to hit.
+        :param json: Json encoded data to send to the path.
+        :param data: Form encoded data to send to the path.
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response as a dict.
         """
-        full_url = f"{self._host}{url}"
+        full_url = f"{self._host}{path}"
         headers = self._headers
         headers["Accept"] = "application/json"
 
