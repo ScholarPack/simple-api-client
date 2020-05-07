@@ -2,6 +2,21 @@
 
 A simple API client for connecting to remote services.
 
+## Features
+
+Along with common methods for creating and performing Json based API
+requests, this library supports the following extra features.
+
+* Convenience methods for adding Basic and Bearer auth headers.
+* A convenience method for adding signed cookies.
+* A timeout limit for all requests.
+* A global or per-request retry limit to retry an API request if it fails.
+* Uses a best effort approach to deal with malformed Json returned from an API endpoint.
+* Each response is guaranteed to contain a status code and well formed parsed Json data.
+    * If something goes wrong, an error message will always be included in the data.
+* Fully supports returning binary data (as bytes) from an API request.
+* handles rate limiting when performing an API request. These requests can be configured to be retried before raising an error.
+
 ## Installation
 
 Install and update using `pipenv`
