@@ -8,6 +8,7 @@ black = "*"
 freezegun = "*"
 mock = "*"
 pytest = "*"
+pytest-cov = "*"
 twine = "*"
 
 [packages]

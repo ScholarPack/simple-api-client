@@ -1,3 +1,5 @@
+![Build Status](https://github.com/ScholarPack/simple-api-client/workflows/Validate%20Build/badge.svg)
+
 # Simple Api Client
 
 A simple API client for connecting to remote services.
