@@ -6,6 +6,7 @@ from cookie_manager.cookie_manager import CookieManager
 from logging import Logger
 from requests.adapters import HTTPAdapter
 from typing import Any, List, Dict, Optional, Iterator
+from urllib.parse import urlparse
 from urllib3.util.retry import Retry
 from werkzeug import exceptions
 
@@ -65,8 +66,9 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :raises: Exception: If the host contains a path.
         """
-        self._host: str = host
+        self._set_host(host)
         self._logger: Logger = logger
         self._timeout: int = timeout
         self._retry_attempts: int = retry_attempts
@@ -155,8 +157,9 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response converted from Json to a dict
+        :raises: Exception: If the path doesn't start with a forward-slash.
         """
-        full_url = f"{self._host}{path}"
+        full_url = self._create_full_url(path)
         headers = self._headers
         headers["Accept"] = "application/json"
 
@@ -188,8 +191,9 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response is a binary object
+        :raises: Exception: If the path doesn't start with a forward-slash.
         """
-        full_url = f"{self._host}{path}"
+        full_url = self._create_full_url(path)
         headers = self._headers
         headers["Accept"] = "application/octet-stream"
 
@@ -225,8 +229,9 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response as a dict.
+        :raises: Exception: If the path doesn't start with a forward-slash.
         """
-        full_url = f"{self._host}{path}"
+        full_url = self._create_full_url(path)
         headers = self._headers
         headers["Accept"] = "application/json"
 
@@ -255,6 +260,28 @@ class ApiClient:
             )
 
         return self._handle_response(response)
+
+    def _set_host(self, host: str) -> None:
+        """
+        Set a correct base host for the client.
+        :param host: The host to set.
+        :raises: Exception: If the host contains a path.
+        """
+        url = urlparse(host)
+        if url.path:
+            raise Exception("No path should be specified on the host")
+        self._host = f"{url.scheme}://{url.netloc}"
+
+    def _create_full_url(self, path) -> str:
+        """
+        Create and return the full url based on the passed path.
+        :param path: The path to append to the host.
+        :return: The full url.
+        :raises: Exception: If the path doesn't start with a forward-slash.
+        """
+        if path[0] != "/":
+            raise Exception("Path needs to start with a forward-slash")
+        return f"{self._host}{path}"
 
     def _create_session(
         self,

@@ -25,6 +25,17 @@ class TestApiClient:
         assert client._headers == {}
         assert client._cookies == {}
 
+    def test_instantiation_with_long_host(self):
+        logger = Logger("test", level="DEBUG")
+        client = ApiClient("http://gary@www.example.com:455", logger)
+        assert client._host == "http://gary@www.example.com:455"
+
+    def test_instantiation_with_host_containing_a_path(self):
+        with pytest.raises(Exception) as excinfo:
+            logger = Logger("test", level="DEBUG")
+            client = ApiClient("http://www.example.com/url", logger)
+        assert str(excinfo.value) == "No path should be specified on the host"
+
     def test_adding_and_removing_headers(self):
         client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
         assert client._headers == {}
@@ -124,6 +135,12 @@ class TestApiClient:
         assert session.adapters.get("https://").max_retries.backoff_factor == 0.2
         assert session.adapters.get("https://").max_retries.status_forcelist == [500]
 
+    def test_making_a_get_request_with_a_bad_path(self):
+        with pytest.raises(Exception) as excinfo:
+            client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
+            response = client.get("unknown/resource/")
+        assert str(excinfo.value) == "Path needs to start with a forward-slash"
+
     @mock.patch("requests.Session.get")
     @mock.patch("simple_api_client.ApiClient._create_session")
     def test_making_a_get_request(self, create_session_method, requests_get_method):
@@ -144,6 +161,12 @@ class TestApiClient:
             cookies={},
             timeout=30,
         )
+
+    def test_making_a_get_binary_request_with_a_bad_path(self):
+        with pytest.raises(Exception) as excinfo:
+            client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
+            response = client.get_binary("unknown/resource/")
+        assert str(excinfo.value) == "Path needs to start with a forward-slash"
 
     @mock.patch("requests.Session.get")
     @mock.patch("simple_api_client.ApiClient._create_session")
@@ -167,6 +190,12 @@ class TestApiClient:
             cookies={},
             timeout=30,
         )
+
+    def test_making_a_post_request_with_a_bad_path(self):
+        with pytest.raises(Exception) as excinfo:
+            client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
+            response = client.post("unknown/resource/", {"foo": "bar"})
+        assert str(excinfo.value) == "Path needs to start with a forward-slash"
 
     @mock.patch("requests.Session.post")
     @mock.patch("simple_api_client.ApiClient._create_session")
