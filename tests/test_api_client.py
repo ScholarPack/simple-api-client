@@ -5,6 +5,7 @@ import requests
 from freezegun import freeze_time
 from logging import Logger
 from simple_api_client import ApiClient, ApiResponse
+from simple_api_client.simple_api_client import ApiClientHostError, ApiClientPathError
 from urllib3.util.retry import Retry
 from werkzeug.exceptions import TooManyRequests
 
@@ -31,7 +32,7 @@ class TestApiClient:
         assert client._host == "http://gary@www.example.com:455"
 
     def test_instantiation_with_host_containing_a_path(self):
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(ApiClientHostError) as excinfo:
             logger = Logger("test", level="DEBUG")
             client = ApiClient("http://www.example.com/url", logger)
         assert str(excinfo.value) == "No path should be specified on the host"
@@ -136,7 +137,7 @@ class TestApiClient:
         assert session.adapters.get("https://").max_retries.status_forcelist == [500]
 
     def test_making_a_get_request_with_a_bad_path(self):
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(ApiClientPathError) as excinfo:
             client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
             response = client.get("unknown/resource/")
         assert str(excinfo.value) == "Path needs to start with a forward-slash"
@@ -163,7 +164,7 @@ class TestApiClient:
         )
 
     def test_making_a_get_binary_request_with_a_bad_path(self):
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(ApiClientPathError) as excinfo:
             client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
             response = client.get_binary("unknown/resource/")
         assert str(excinfo.value) == "Path needs to start with a forward-slash"
@@ -192,7 +193,7 @@ class TestApiClient:
         )
 
     def test_making_a_post_request_with_a_bad_path(self):
-        with pytest.raises(Exception) as excinfo:
+        with pytest.raises(ApiClientPathError) as excinfo:
             client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
             response = client.post("unknown/resource/", {"foo": "bar"})
         assert str(excinfo.value) == "Path needs to start with a forward-slash"

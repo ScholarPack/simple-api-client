@@ -48,6 +48,22 @@ class ApiResponse:
         return f"Response: {self.status_code}, {self.data}"
 
 
+class ApiClientHostError(Exception):
+    """
+    Raised when the host has a bad format.
+    """
+
+    pass
+
+
+class ApiClientPathError(Exception):
+    """
+    Raised when a path has a bad format.
+    """
+
+    pass
+
+
 class ApiClient:
     def __init__(
         self,
@@ -66,7 +82,7 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
-        :raises: Exception: If the host contains a path.
+        :raises: ApiClientHostError: If the host contains a path.
         """
         self._set_host(host)
         self._logger: Logger = logger
@@ -157,7 +173,7 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response converted from Json to a dict
-        :raises: Exception: If the path doesn't start with a forward-slash.
+        :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
         full_url = self._create_full_url(path)
         headers = self._headers
@@ -191,7 +207,7 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response is a binary object
-        :raises: Exception: If the path doesn't start with a forward-slash.
+        :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
         full_url = self._create_full_url(path)
         headers = self._headers
@@ -229,7 +245,7 @@ class ApiClient:
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
         :return: The response as a dict.
-        :raises: Exception: If the path doesn't start with a forward-slash.
+        :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
         full_url = self._create_full_url(path)
         headers = self._headers
@@ -265,11 +281,11 @@ class ApiClient:
         """
         Set a correct base host for the client.
         :param host: The host to set.
-        :raises: Exception: If the host contains a path.
+        :raises: ApiClientHostError: If the host contains a path.
         """
         url = urlparse(host)
         if url.path:
-            raise Exception("No path should be specified on the host")
+            raise ApiClientHostError("No path should be specified on the host")
         self._host = f"{url.scheme}://{url.netloc}"
 
     def _create_full_url(self, path) -> str:
@@ -277,10 +293,10 @@ class ApiClient:
         Create and return the full url based on the passed path.
         :param path: The path to append to the host.
         :return: The full url.
-        :raises: Exception: If the path doesn't start with a forward-slash.
+        :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
         if path[0] != "/":
-            raise Exception("Path needs to start with a forward-slash")
+            raise ApiClientPathError("Path needs to start with a forward-slash")
         return f"{self._host}{path}"
 
     def _create_session(
