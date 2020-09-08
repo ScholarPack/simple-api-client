@@ -7,7 +7,7 @@ from logging import Logger
 from simple_api_client import ApiClient, ApiResponse
 from simple_api_client.simple_api_client import ApiClientHostError, ApiClientPathError
 from urllib3.util.retry import Retry
-from werkzeug.exceptions import TooManyRequests
+from werkzeug.exceptions import NotFound, TooManyRequests
 
 
 class TestApiClient:
@@ -22,6 +22,7 @@ class TestApiClient:
         assert client._retry_attempts == 0
         assert client._retry_backoff_factor == 0.1
         assert client._retry_on_status == [429, 500, 502, 503, 504]
+        assert client._raise_on_status == False
 
         assert client._headers == {}
         assert client._cookies == {}
@@ -155,7 +156,7 @@ class TestApiClient:
             retry_on_status=[429],
         )
 
-        create_session_method.assert_called_with(3, 0.2, [429])
+        create_session_method.assert_called_with(3, 0.2, [429], False)
         requests_get_method.assert_called_with(
             "http://www.example.com/unknown",
             headers={"Accept": "application/json"},
@@ -184,7 +185,7 @@ class TestApiClient:
             retry_on_status=[500],
         )
 
-        create_session_method.assert_called_with(2, 0.1, [500])
+        create_session_method.assert_called_with(2, 0.1, [500], False)
         requests_get_method.assert_called_with(
             "http://www.example.com/unknown",
             headers={"Accept": "application/octet-stream"},
@@ -212,7 +213,7 @@ class TestApiClient:
             retry_on_status=[501],
         )
 
-        create_session_method.assert_called_with(1, 0.3, [501])
+        create_session_method.assert_called_with(1, 0.3, [501], False)
         requests_post_method.assert_called_with(
             "http://www.example.com/unknown",
             headers={"Accept": "application/json", "Content-Type": "application/json"},
@@ -235,6 +236,29 @@ class TestApiClient:
         with pytest.raises(TooManyRequests) as ex:
             response = client.get("/unknown")
             assert ex.description == "External API rate limit: 10 per second"
+
+    @mock.patch("requests.Session.get")
+    @mock.patch("simple_api_client.ApiClient._create_session")
+    def test_making_a_get_request_with_raise_on_error(
+        self, create_session_method, requests_get_method
+    ):
+        requests_get_method.return_value = type(
+            "fake_request",
+            (),
+            {
+                "json": lambda: {"message": "Example 404 Page Not Found Message"},
+                "status_code": 404,
+            },
+        )
+
+        client = ApiClient(
+            "http://www.example.com", Logger("test", level="DEBUG"), raise_on_error=True
+        )
+
+        with pytest.raises(NotFound) as ex:
+            response = client.get("/unknown")
+            create_session_method.assert_called_with(None, None, None, True)
+            assert ex.description == "Not found"
 
 
 class TestApiClientReponse:

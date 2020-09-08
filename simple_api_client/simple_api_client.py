@@ -73,6 +73,7 @@ class ApiClient:
         retry_attempts: int = 0,
         retry_backoff_factor: float = 0.1,
         retry_on_status: List[int] = [429, 500, 502, 503, 504],
+        raise_on_error: bool = False,
     ):
         """
         Initialise a new api client.
@@ -82,6 +83,7 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :param raise_on_error: Raises response exceptions.
         :raises: ApiClientHostError: If the host contains a path.
         """
         self._set_host(host)
@@ -90,6 +92,7 @@ class ApiClient:
         self._retry_attempts: int = retry_attempts
         self._retry_backoff_factor: float = retry_backoff_factor
         self._retry_on_status: List[int] = retry_on_status
+        self._raise_on_status = raise_on_error
         self._headers = {}
         self._cookies = {}
 
@@ -165,6 +168,7 @@ class ApiClient:
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
+        raise_on_status: Optional[bool] = False,
     ) -> ApiResponse:
         """
         Send a GET request to the API
@@ -172,6 +176,7 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :param raise_on_status: Raises response exceptions.
         :return: The response converted from Json to a dict
         :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
@@ -185,7 +190,7 @@ class ApiClient:
         self._logger.debug(f"Timeout: {self._timeout}")
 
         with self._create_session(
-            retry_attempts, retry_backoff_factor, retry_on_status
+            retry_attempts, retry_backoff_factor, retry_on_status, raise_on_status
         ) as session:
             response = session.get(
                 full_url, headers=headers, cookies=self._cookies, timeout=self._timeout
@@ -199,6 +204,7 @@ class ApiClient:
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
+        raise_on_status: Optional[bool] = False,
     ) -> ApiResponse:
         """
         Send a GET request to the API and expect a binary object back
@@ -206,7 +212,8 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
-        :return: The response is a binary object
+        :param raise_on_status: Raises response exceptions.
+        :return: The response as a binary object
         :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
         full_url = self._create_full_url(path)
@@ -219,7 +226,7 @@ class ApiClient:
         self._logger.debug(f"Timeout: {self._timeout}")
 
         with self._create_session(
-            retry_attempts, retry_backoff_factor, retry_on_status
+            retry_attempts, retry_backoff_factor, retry_on_status, raise_on_status
         ) as session:
             response = session.get(
                 full_url, headers=headers, cookies=self._cookies, timeout=self._timeout
@@ -235,6 +242,7 @@ class ApiClient:
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
+        raise_on_status: Optional[bool] = False,
     ) -> ApiResponse:
         """
         Send a POST request to the API.
@@ -244,6 +252,7 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :param raise_on_status: Raises response exceptions.
         :return: The response as a dict.
         :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
         """
@@ -264,7 +273,7 @@ class ApiClient:
         self._logger.debug(f"Data: {data}")
 
         with self._create_session(
-            retry_attempts, retry_backoff_factor, retry_on_status
+            retry_attempts, retry_backoff_factor, retry_on_status, raise_on_status
         ) as session:
             response = session.post(
                 full_url,
@@ -304,23 +313,26 @@ class ApiClient:
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
+        raise_on_status: Optional[bool] = False,
     ) -> requests.Session:
         """
         Create a new request session.
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :param raise_on_status: Raises response exceptions.
         :return: A requests session object.
         """
         retry_attempts = retry_attempts or self._retry_attempts
         retry_backoff_factor = retry_backoff_factor or self._retry_backoff_factor
         retry_on_status = retry_on_status or self._retry_on_status
+        raise_on_status = raise_on_status or self._raise_on_status
 
         retries = Retry(
             total=retry_attempts,
             backoff_factor=retry_backoff_factor,
             status_forcelist=retry_on_status,
-            raise_on_status=False,
+            raise_on_status=raise_on_status,
         )
 
         session = requests.Session()
@@ -333,13 +345,28 @@ class ApiClient:
         Handle the response of a request by checking for rate limiting and
         returning a cleaned up response
         :param response: A standard requests response.
+        :return: The response.
         """
+        if self._raise_on_status:
+            self._check_for_not_found(response)
+
         self._check_for_rate_limit(response)
 
         response = ApiResponse(response)
         self._logger.debug(response)
 
         return response
+
+    def _check_for_not_found(self, response: requests.Response) -> None:
+        """
+        Check the passed response for rate limiting.
+        :param response: A standard requests response.
+        :raises: NotFound: If 404 status was detected.
+        """
+        if response.status_code == 404:
+            message = "Not found"
+            self._logger.warning(message)
+            raise exceptions.NotFound(description=message)
 
     def _check_for_rate_limit(self, response: requests.Response) -> None:
         """
