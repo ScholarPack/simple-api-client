@@ -257,8 +257,11 @@ class TestApiClient:
 
         with pytest.raises(NotFound) as ex:
             response = client.get("/unknown")
-            create_session_method.assert_called_with(None, None, None, True)
             assert ex.description == "Not found"
+            # NOTE: AttributeError: 'ExceptionInfo' object has no attribute 'description'
+            #       even though we're trying to set it on line 369 of simple_api_client.py
+            #       description is listed as kwarg in the docs (see link below)
+            #       https://werkzeug.palletsprojects.com/en/1.0.x/exceptions/
 
 
 class TestApiClientReponse:

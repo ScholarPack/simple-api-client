@@ -347,8 +347,7 @@ class ApiClient:
         :param response: A standard requests response.
         :return: The response.
         """
-        if self._raise_on_status:
-            self._check_for_not_found(response)
+        self._check_for_not_found(response)
 
         self._check_for_rate_limit(response)
 
