@@ -277,6 +277,40 @@ class ApiClient:
 
         return self._handle_response(response)
 
+    def delete(
+        self,
+        path: str,
+        retry_attempts: Optional[int] = None,
+        retry_backoff_factor: Optional[float] = None,
+        retry_on_status: Optional[List[int]] = None,
+    ) -> ApiResponse:
+        """
+        Send a DELETE request to the API.
+        :param path: The API path to hit.
+        :param retry_attempts: The amount of times to attempt to retry.
+        :param retry_backoff_factor: A multipler to increase the time between retries by.
+        :param retry_on_status: Retry on encountering these status codes.
+        :return: The response as a dict.
+        :raises: ApiClientPathError: If the path doesn't start with a forward-slash.
+        """
+        full_url = self._create_full_url(path)
+        headers = self._headers
+        headers["Accept"] = "application/json"
+
+        self._logger.debug(f"DELETE: {full_url}")
+        self._logger.debug(f"Headers: {headers}")
+        self._logger.debug(f"Cookies: {self._cookies}")
+        self._logger.debug(f"Timeout: {self._timeout}")
+
+        with self._create_session(
+            retry_attempts, retry_backoff_factor, retry_on_status
+        ) as session:
+            response = session.delete(
+                full_url, headers=headers, cookies=self._cookies, timeout=self._timeout
+            )
+
+        return self._handle_response(response)
+
     def _set_host(self, host: str) -> None:
         """
         Set a correct base host for the client.

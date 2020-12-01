@@ -222,6 +222,35 @@ class TestApiClient:
             data=None,
         )
 
+    def test_making_a_delete_request_with_a_bad_path(self):
+        with pytest.raises(ApiClientPathError) as excinfo:
+            client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
+            response = client.delete("unknown/resource/", {"foo": "bar"})
+        assert str(excinfo.value) == "Path needs to start with a forward-slash"
+
+    @mock.patch("requests.Session.delete")
+    @mock.patch("simple_api_client.ApiClient._create_session")
+    def test_making_a_delete_request(
+        self, create_session_method, requests_delete_method
+    ):
+        create_session_method.return_value = requests.Session()
+
+        client = ApiClient("http://www.example.com", Logger("test", level="DEBUG"))
+        response = client.delete(
+            "/unknown",
+            retry_attempts=1,
+            retry_backoff_factor=0.3,
+            retry_on_status=[501],
+        )
+
+        create_session_method.assert_called_with(1, 0.3, [501])
+        requests_delete_method.assert_called_with(
+            "http://www.example.com/unknown",
+            headers={"Accept": "application/json"},
+            cookies={},
+            timeout=30,
+        )
+
     @mock.patch("requests.Session.get")
     def test_making_a_rate_limited_get_request(self, requests_get_method):
         requests_get_method.return_value = type(
