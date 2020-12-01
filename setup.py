@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="simple-api-client",
-    version="1.0.4",
+    version="1.0.5",
     author="ScholarPack",
     author_email="dev@scholarpack.com",
     description="A simple API client for connecting to remote services.",
