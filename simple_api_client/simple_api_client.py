@@ -73,6 +73,7 @@ class ApiClient:
         retry_attempts: int = 0,
         retry_backoff_factor: float = 0.1,
         retry_on_status: List[int] = [429, 500, 502, 503, 504],
+        raise_exception_on_error: bool = False,
     ):
         """
         Initialise a new api client.
@@ -82,6 +83,7 @@ class ApiClient:
         :param retry_attempts: The amount of times to attempt to retry.
         :param retry_backoff_factor: A multipler to increase the time between retries by.
         :param retry_on_status: Retry on encountering these status codes.
+        :param raise_exception_on_error: Raise an exception on HTTP error codes (400 to 599).
         :raises: ApiClientHostError: If the host contains a path.
         """
         self._set_host(host)
@@ -90,6 +92,7 @@ class ApiClient:
         self._retry_attempts: int = retry_attempts
         self._retry_backoff_factor: float = retry_backoff_factor
         self._retry_on_status: List[int] = retry_on_status
+        self._raise_exception_on_error: bool = raise_exception_on_error
         self._headers = {}
         self._cookies = {}
 
@@ -368,7 +371,12 @@ class ApiClient:
         returning a cleaned up response
         :param response: A standard requests response.
         """
+        # For backward compatibility reasons rate limiting is not inside the
+        # exception check below.
         self._check_for_rate_limit(response)
+
+        if self._raise_exception_on_error:
+            self._check_for_error(response)
 
         response = ApiResponse(response)
         self._logger.debug(response)
@@ -386,3 +394,25 @@ class ApiClient:
             message = f"External API rate limit: {message}"
             self._logger.warning(message)
             raise exceptions.TooManyRequests(description=message)
+
+    def _check_for_error(self, response: requests.Response) -> None:
+        """
+        Check the passed response for HTTP error.
+        :param response: A standard requests response.
+        :raises Exception: An appropriate exception if an error occurred.
+        """
+        # For backward compatibility reasons ignore 'too many requests' errors
+        # as they are handled elsewhere for now.
+        if response.status_code == 429:
+            return
+
+        if response.status_code >= 400 and response.status_code <= 599:
+            for exception in exceptions.__all__:
+                if issubclass(exception, exceptions.HTTPException) and exception.code == response.status_code:
+                    raise exception
+            try:
+                response.raise_for_status()
+            except Exception as ex:
+                exception = exceptions.HTTPException(description=str(ex), response=response)
+                exception.code = response.status_code
+                raise exception
