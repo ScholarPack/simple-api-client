@@ -10,14 +10,13 @@ mock = "*"
 pytest = "*"
 pytest-cov = "*"
 twine = "*"
+bandit = "*"
+dataclasses = "*"
 
 [packages]
 cookie-manager = "*"
 requests = "*"
 werkzeug = "*"
-
-[requires]
-python_version = "3.6"
 
 [pipenv]
 allow_prereleases = true
