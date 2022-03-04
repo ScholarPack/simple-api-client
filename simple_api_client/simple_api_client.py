@@ -165,6 +165,7 @@ class ApiClient:
         retry_attempts: Optional[int] = None,
         retry_backoff_factor: Optional[float] = None,
         retry_on_status: Optional[List[int]] = None,
+        verify=True,
     ) -> ApiResponse:
         """
         Send a GET request to the API
@@ -188,7 +189,11 @@ class ApiClient:
             retry_attempts, retry_backoff_factor, retry_on_status
         ) as session:
             response = session.get(
-                full_url, headers=headers, cookies=self._cookies, timeout=self._timeout
+                full_url,
+                headers=headers,
+                cookies=self._cookies,
+                timeout=self._timeout,
+                verify=verify,
             )
 
         return self._handle_response(response)
