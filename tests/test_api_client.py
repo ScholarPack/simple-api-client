@@ -153,6 +153,7 @@ class TestApiClient:
             retry_attempts=3,
             retry_backoff_factor=0.2,
             retry_on_status=[429],
+            verify=False,
         )
 
         create_session_method.assert_called_with(3, 0.2, [429])
@@ -161,6 +162,7 @@ class TestApiClient:
             headers={"Accept": "application/json"},
             cookies={},
             timeout=30,
+            verify=False,
         )
 
     def test_making_a_get_binary_request_with_a_bad_path(self):
